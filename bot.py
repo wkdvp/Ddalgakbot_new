@@ -44,6 +44,7 @@ def call_api(api_endpoint, **payload):
 @bot.event
 async def on_ready():
     print("Bot is ready")
+    await bot.tree.sync()
 
 @bot.command(name='딸깍')
 async def t2i(ctx, *arg):
@@ -62,11 +63,39 @@ async def t2i(ctx, *arg):
     }
     user_name = ctx.message.author.name # sender's name
     print(argument)
+    msg = await ctx.reply("생성중...")
     call_txt2img_api(user_name, **payload)
     with open(f'./api_out/txt2img/txt2img-{user_name}-0.png', 'rb') as f:
         picture = discord.File(f)
+        await msg.delete()
         await ctx.reply(file=picture)
     os.remove(f'./api_out/txt2img/txt2img-{user_name}-0.png')
+
+#test functionn
+@bot.command(name='카즈사테스트딸깍')
+async def t2i(ctx, *arg):
+    argument = ', '.join(arg)
+    payload = {
+        "prompt": "masterpiece, (best quality:1.1)" + argument,  # user prompt
+        "negative_prompt": "one hand with more than 5 fingers, one hand with less than 5 fingers,(worst quality, normal quality, low quality:1.4), lowres, blurry",
+        "seed": 1,
+        "steps": 20,
+        "width": 512,
+        "height": 512,
+        "cfg_scale": 7,
+        "sampler_name": "DPM++ 2M",
+        "n_iter": 1,
+        "batch_size": 1,
+    }
+    user_name = ctx.message.author.name # sender's name
+    print(argument)
+    msg = await ctx.reply("생성중...")
+    #call_txt2img_api(user_name, **payload)
+    with open(f'./api_out/txt2img/test_kazusa.png', 'rb') as f:
+        picture = discord.File(f)
+        await msg.delete()
+        await ctx.reply(file=picture)
+    #os.remove(f'./api_out/txt2img/txt2img-{user_name}-0.png')
 
 with open("json\\token.json", 'r') as f:
     token = json.load(f)['api_token']
