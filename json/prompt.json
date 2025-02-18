@@ -1,0 +1,4 @@
+{
+    "positive_prompt": "masterpiece, (best quality:1.1)",
+    "negative_prompt": "disaster, (worst quality:1.1), one hand with more than 5 fingers, one hand with less than 5 fingers,(worst quality, normal quality, low quality:1.4), lowres, blurry, text, artist_name, user name, signature, watermark, jpeg artifact, "
+}
