@@ -56,7 +56,9 @@ def call_api(api_endpoint, **payload):
 
 @bot.event
 async def on_ready():
-    print("Bot is ready")
+    with open("json\\token.json", 'r') as f:
+        bot_name = json.load(f)['bot_name']
+    print(f"{bot_name} is ready")
     await bot.tree.sync()
 
 @bot.command(name='딸깍')
@@ -121,7 +123,7 @@ class prompt_modal(ui.Modal, title="프롬프트 입력기"):
         doing = await interaction.followup.send("생성중...")
         if(not call_txt2img_api(user_name, **payload)):
         #if False:
-            await interaction.followup.edit_message(content="생성에 실패하였습니다.")
+            await interaction.followup.edit_message(message_id=doing.id, content="생성에 실패하였습니다.")
             return
         with open(f'./api_out/txt2img/txt2img-{user_name}-0.png', 'rb') as f:
         #with open(f'./api_out/txt2img/test_kazusa.png', 'rb') as f:
