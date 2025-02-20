@@ -5,6 +5,9 @@ import urllib.request
 import base64
 import json
 import os
+import random
+import hashlib
+import time
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -16,6 +19,10 @@ webui_server_url = 'http://127.0.0.1:7860'
 out_dir = 'api_out'
 out_dir_t2i = os.path.join(out_dir, 'txt2img')
 os.makedirs(out_dir_t2i, exist_ok=True)
+
+def get_seed(string):
+    a = string + str(time.time())
+    return int(hashlib.md5(a.encode()).hexdigest(), 16) % 1000000
 
 with open("json\\prompt.json", 'r') as f:
     prompt = json.load(f)
@@ -63,11 +70,12 @@ async def on_ready():
 
 @bot.command(name='딸깍')
 async def t2i(ctx, *arg):
+    user_name = ctx.message.author.name # sender's name
     argument = ', '.join(arg)
+    random.seed(get_seed(user_name))
     payload = {
         "prompt": p_prompt + argument,  # user prompt
         "negative_prompt": n_prompt,
-        "seed": 1,
         "steps": 20,
         "width": 512,
         "height": 512,
@@ -75,8 +83,8 @@ async def t2i(ctx, *arg):
         "sampler_name": "DPM++ 2M",
         "n_iter": 1,
         "batch_size": 1,
+        "seed:": random.randint(0, 1000000)
     }
-    user_name = ctx.message.author.name # sender's name
     print(argument)
     msg = await ctx.reply("생성중...")
     if(not call_txt2img_api(user_name, **payload)):
@@ -106,10 +114,10 @@ class prompt_modal(ui.Modal, title="프롬프트 입력기"):
 
     async def on_submit(self, interaction: discord.Interaction):
         user_name = interaction.user.name
+        random.seed(get_seed(user_name))
         payload = {
             "prompt": self.user_positive_prompt.value,  # user prompt
             "negative_prompt": self.user_negative_prompt.value,
-            "seed": 1,
             "steps": 20,
             "width": 512,
             "height": 512,
@@ -117,8 +125,9 @@ class prompt_modal(ui.Modal, title="프롬프트 입력기"):
             "sampler_name": "DPM++ 2M",
             "n_iter": 1,
             "batch_size": 1,
+            "seed:": random.randint(0, 1000000)
         }
-        #print(payload)
+        print(payload)
         await interaction.response.defer()
         doing = await interaction.followup.send("생성중...")
         if(not call_txt2img_api(user_name, **payload)):
