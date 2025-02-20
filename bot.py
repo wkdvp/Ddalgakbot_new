@@ -85,7 +85,7 @@ async def t2i(ctx, *arg):
         "batch_size": 1,
         "seed:": random.randint(0, 1000000)
     }
-    print(argument)
+    #print(argument)
     msg = await ctx.reply("생성중...")
     if(not call_txt2img_api(user_name, **payload)):
         await msg.delete()
