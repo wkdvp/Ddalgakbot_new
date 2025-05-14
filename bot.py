@@ -8,6 +8,8 @@ import os
 import random
 import hashlib
 import time
+import requests
+#from saucenao_api import SauceNao
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -28,6 +30,13 @@ with open("json\\prompt.json", 'r') as f:
     prompt = json.load(f)
     p_prompt = prompt['positive_prompt']
     n_prompt = prompt['negative_prompt']
+f.close()
+
+with open("json\\token.json", "r") as tf:
+    j = json.load(tf)
+    token = j["api_token"]
+    sauce_toekn = j["saucenao_api_key"]
+tf.close
 
 def encode_file_to_base64(path):    # i2i api
     with open(path, 'rb') as file:
@@ -146,6 +155,58 @@ async def high_t2i(interaction: discord.Interaction):
     await interaction.response.send_modal(prompt_modal())
 
 
+@bot.command(name="링크")
+async def zelda(ctx):
+    def transform_pixiv_url(pximg_link):
+        urls = f"https://www.pixiv.net/artworks/{pximg_link.split('/')[-1]}"
+        return urls
+    if ctx.message.reference and ctx.message.reference.resolved:
+        original = ctx.message.reference.resolved
+    else:
+        return
+    print("링크")
+    #print(type(original.attachments[0]))
+    url = 'http://saucenao.com/search.php'
+    if original.attachments:
+        params = {
+            'url' : original.attachments[0],
+            'output_type' : 2,
+            'numres' : 1,
+            'api_key' : sauce_toekn
+        }
+        res = requests.post(url, data=params)
+        if res.status_code == 200:
+            result = res.json()
+            print('foo')
+            print(json.dumps(result["results"][0], indent=3))
+            #print(json.dumps(result["results"][1]["data"]["ext_urls"][0], indent=3))
+            if float(result["results"][0]["header"]["similarity"]) < 65:
+                err_msg = await ctx.reply("이미지를 찾지 못했습니다.")
+                time.sleep(30)
+                await err_msg.delete()
+                return
+            if "source" in result["results"][0]["data"]:
+                img_source = result["results"][0]["data"]["source"]
+            elif "ext_urls" in result["results"][0]["data"]:
+                img_source = result["results"][0]["data"]["ext_urls"][0]
+            else:
+                err_msg = await ctx.reply("이미지를 찾지 못했습니다.")
+                time.sleep(30)
+                await err_msg.delete()
+                return
+            if 'pximg' in img_source:
+                print("dkd")
+                img_source = transform_pixiv_url(img_source)
+            msg = await ctx.reply(img_source)
+        else:
+            print("fail to link")
+            print(f"Error: {res.status_code}")
+    else:
+        msg = await ctx.reply("병신ㅋㅋ")
+        time.sleep(3)
+        await msg.delete()
+        
+
 ######### test functionn ###########
 @bot.command(name='카즈사테스트딸깍')
 async def t2i(ctx, *arg):
@@ -172,6 +233,7 @@ async def t2i(ctx, *arg):
         await ctx.reply(file=picture)
     #os.remove(f'./api_out/txt2img/txt2img-{user_name}-0.png')  
 
-with open("json\\token.json", 'r') as f:
-    token = json.load(f)['api_token']
+
 bot.run(token)
+
+

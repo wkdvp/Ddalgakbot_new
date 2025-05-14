@@ -1,2 +1,3 @@
 token.json
-test_kazusa.png
+api_out/txt2img/*
+.venv/
