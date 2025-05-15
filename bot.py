@@ -69,6 +69,40 @@ def call_api(api_endpoint, **payload):
     except urllib.error.URLError as e:
         print(f"fail to call: {e}")
         return -1
+    
+def img_link(img_url):
+    def transform_pixiv_url(pximg_link):
+        urls = f"https://www.pixiv.net/artworks/{pximg_link.split('/')[-1]}"
+        return urls
+    url = 'http://saucenao.com/search.php'
+    params = {
+        'url' : img_url,
+        'output_type' : 2,
+        'numres' : 1,
+        'api_key' : sauce_toekn
+    }
+    res = requests.post(url, data=params)
+    if res.status_code == 200:
+        result = res.json()
+        print('foo')
+        print(json.dumps(result["results"][1], indent=3))
+        #print(json.dumps(result["results"][1]["data"]["ext_urls"][0], indent=3))
+        if float(result["results"][0]["header"]["similarity"]) < 65:
+            return False
+        if "source" in result["results"][0]["data"]:
+            img_source = result["results"][0]["data"]["source"]
+        elif "ext_urls" in result["results"][0]["data"]:
+            img_source = result["results"][0]["data"]["ext_urls"][0]
+        else:
+            return False
+        if 'pximg' in img_source:
+            print("dkd")
+            img_source = transform_pixiv_url(img_source)
+        return img_source
+    else:
+        print("fail to link")
+        print(f"Error: {res.status_code}")
+        return False
 
 @bot.event
 async def on_ready():
@@ -154,53 +188,20 @@ class prompt_modal(ui.Modal, title="프롬프트 입력기"):
 async def high_t2i(interaction: discord.Interaction):
     await interaction.response.send_modal(prompt_modal())
 
-
 @bot.command(name="링크")
 async def zelda(ctx):
-    def transform_pixiv_url(pximg_link):
-        urls = f"https://www.pixiv.net/artworks/{pximg_link.split('/')[-1]}"
-        return urls
     if ctx.message.reference and ctx.message.reference.resolved:
-        original = ctx.message.reference.resolved
+        original = await ctx.channel.fetch_message(ctx.message.reference.message_id)
     else:
         return
     print("링크")
     #print(type(original.attachments[0]))
-    url = 'http://saucenao.com/search.php'
     if original.attachments:
-        params = {
-            'url' : original.attachments[0],
-            'output_type' : 2,
-            'numres' : 1,
-            'api_key' : sauce_toekn
-        }
-        res = requests.post(url, data=params)
-        if res.status_code == 200:
-            result = res.json()
-            print('foo')
-            print(json.dumps(result["results"][0], indent=3))
-            #print(json.dumps(result["results"][1]["data"]["ext_urls"][0], indent=3))
-            if float(result["results"][0]["header"]["similarity"]) < 65:
-                err_msg = await ctx.reply("이미지를 찾지 못했습니다.")
-                time.sleep(30)
-                await err_msg.delete()
-                return
-            if "source" in result["results"][0]["data"]:
-                img_source = result["results"][0]["data"]["source"]
-            elif "ext_urls" in result["results"][0]["data"]:
-                img_source = result["results"][0]["data"]["ext_urls"][0]
-            else:
-                err_msg = await ctx.reply("이미지를 찾지 못했습니다.")
-                time.sleep(30)
-                await err_msg.delete()
-                return
-            if 'pximg' in img_source:
-                print("dkd")
-                img_source = transform_pixiv_url(img_source)
-            msg = await ctx.reply(img_source)
+        img_source = img_link(original.attachments[0])
+        if img_source: # find source
+            await ctx.reply(img_source)
         else:
-            print("fail to link")
-            print(f"Error: {res.status_code}")
+            await ctx.reply("이미지 검색에 실패하였습니다.")
     else:
         msg = await ctx.reply("병신ㅋㅋ")
         time.sleep(3)
