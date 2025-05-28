@@ -32,7 +32,7 @@ with open("json/prompt.json", 'r') as f:
     n_prompt = prompt['negative_prompt']
 f.close()
 
-with open("json\\token.json", "r") as tf:
+with open("json/token.json", "r") as tf:
     j = json.load(tf)
     token = j["api_token"]
     sauce_toekn = j["saucenao_api_key"]
