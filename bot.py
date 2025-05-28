@@ -26,7 +26,7 @@ def get_seed(string):
     a = string + str(time.time())
     return int(hashlib.md5(a.encode()).hexdigest(), 16) % 1000000
 
-with open("json\\prompt.json", 'r') as f:
+with open("json/prompt.json", 'r') as f:
     prompt = json.load(f)
     p_prompt = prompt['positive_prompt']
     n_prompt = prompt['negative_prompt']
@@ -106,7 +106,7 @@ def img_link(img_url):
 
 @bot.event
 async def on_ready():
-    with open("json\\token.json", 'r') as f:
+    with open("json/token.json", 'r') as f:
         bot_name = json.load(f)['bot_name']
     print(f"{bot_name} is ready")
     await bot.tree.sync()
